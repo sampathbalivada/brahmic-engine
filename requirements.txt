@@ -1,0 +1,4 @@
+ply>=3.11
+pytest>=6.0
+black>=22.0
+mypy>=0.950
