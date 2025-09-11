@@ -4,7 +4,7 @@ A transpiler that enables Telugu speakers to write code in their native language
 
 [![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-Passing-brightgreen.svg)](tests/)
+[![Tests](https://github.com/sampathbalivada/brahmic-engine/actions/workflows/test.yml/badge.svg)](https://github.com/sampathbalivada/brahmic-engine/actions/workflows/test.yml)
 
 ## 🎯 Overview
 
