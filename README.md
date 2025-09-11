@@ -1,173 +1,232 @@
-# Brahmic Engine Project Structure
+# Brahmic Engine
 
+A transpiler that enables Telugu speakers to write code in their native language, converting Telugu/Tenglish syntax to executable Python code.
+
+[![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://python.org)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Tests](https://img.shields.io/badge/Tests-Passing-brightgreen.svg)](tests/)
+
+## 🎯 Overview
+
+**Brahmic Engine** breaks down language barriers in programming by allowing Telugu speakers to write code using natural Telugu keywords and syntax patterns. The transpiler converts this Telugu code into standard Python, making programming more accessible to 80+ million Telugu speakers worldwide.
+
+## ✨ Features
+
+- **Natural Telugu Syntax**: Write code using intuitive Telugu keywords and grammatical patterns
+- **Multi-word Keywords**: Support for natural Telugu phrases like `munduku vellu` (continue), `unnanta varaku` (while)
+- **Postfix Operations**: Telugu-style syntax like `("Hello")cheppu` for print statements
+- **Mixed Language Support**: Combine Telugu keywords with English variable names
+- **Complete Python Feature Coverage**: All major Python constructs have Telugu equivalents
+
+## 🚀 Quick Start
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/your-username/brahmic-engine.git
+cd brahmic-engine
+
+# Create virtual environment
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
 ```
-brahmic_engine/
-├── src/
-│   ├── __init__.py
-│   ├── lexer.py           # Tokenizer for Telugu/Tenglish
-│   ├── parser.py          # Parser to build AST
-│   ├── ast_nodes.py       # AST node definitions
-│   ├── code_generator.py  # Generate Python from AST
-│   ├── transpiler.py      # Main transpiler orchestrator
-│   └── keywords.py        # Telugu-Python keyword mappings
-├── tests/
-│   ├── __init__.py
-│   ├── test_lexer.py
-│   ├── test_parser.py
-│   ├── test_code_generator.py
-│   ├── test_transpiler.py
-│   └── fixtures/          # Test programs in Telugu
-│       ├── simple_print.te
-│       ├── conditionals.te
-│       ├── loops.te
-│       └── functions.te
-├── examples/
-│   └── sample_programs/
-├── setup.py
-├── requirements.txt
-└── README.md
+
+### Basic Usage
+
+```python
+from src.lexer import TengLexer
+
+# Create lexer
+lexer = TengLexer()
+lexer.build()
+
+# Tokenize Telugu code
+telugu_code = '''
+vidhanam greet(name):
+    ("Hello", name)cheppu
+    "Welcome" ivvu
+'''
+
+tokens = lexer.tokenize(telugu_code)
 ```
 
-## Dependencies
-- ply (Python Lex-Yacc) - for lexing and parsing
-- pytest - for testing
-- black - for code formatting
-- mypy - for type checking (optional)
+## 📝 Language Syntax
 
-# Brahmic Engine - Programming in Your Native Language
+### Keywords
 
-## Vision & Goal
+| Telugu Keyword | Python Equivalent | Example |
+|---------------|-------------------|---------|
+| `vidhanam` | `def` | `vidhanam add(a, b):` |
+| `okavela` | `if` | `okavela x > 5 aite:` |
+| `lekapothe` | `else` | `lekapothe:` |
+| `mariyu` | `and` | `x > 0 mariyu y < 10` |
+| `leda` | `or` | `x < 0 leda y > 10` |
+| `ivvu` | `return` | `result ivvu` |
+| `cheppu` | `print` | `("Hello")cheppu` |
+| `Nijam/Abaddam` | `True/False` | `is_valid = Nijam` |
 
-We're building **Brahmic Engine**, a transpiler that allows Telugu speakers to write code in Telugu/Tenglish (Telugu written in English script) that gets converted to executable Python code. The core idea is to make programming more accessible and intuitive for native Telugu speakers by letting them think and code in their mother tongue.
+### Syntax Patterns
 
-## What We're Building
+**Conditionals:**
+```telugu
+okavela age >= 18 aite:
+    ("Adult")cheppu
+lekapothe:
+    ("Minor")cheppu
+```
 
-### The Problem
-- Programming languages are predominantly English-based, creating a language barrier for non-English speakers
-- Telugu speakers (80+ million people) have to learn English programming syntax before they can start coding
-- Thinking in one language and coding in another creates cognitive overhead
+**Loops:**
+```telugu
+# For loop
+range(5) lo i ki:
+    (i)cheppu
 
-### Our Solution
-A source-to-source translator (transpiler) that:
-1. **Accepts Telugu/Tenglish code** with Telugu keywords and syntax
-2. **Translates it to standard Python** that can be executed
-3. **Preserves the logic** while making it culturally and linguistically familiar
+# While loop  
+count < 10 unnanta varaku:
+    (count)cheppu
+    count = count + 1
+```
 
-## How It Works
+**Functions:**
+```telugu
+vidhanam calculate(x, y):
+    result = x + y
+    result ivvu
+```
 
-### Architecture Overview
+## 🏗️ Architecture
 
 ```
 Telugu Code → Lexer → Parser → AST → Code Generator → Python Code
 ```
 
-1. **Lexical Analysis (Tokenization)**
-   - Breaks Telugu code into tokens (keywords, operators, identifiers)
-   - Recognizes Telugu keywords like `okavela` (if), `prati` (for), `cheppu` (print)
+### Components
 
-2. **Parsing**
-   - Builds an Abstract Syntax Tree (AST) from tokens
-   - Handles Telugu syntax patterns like `okavela <condition> aite` for conditionals
+- **Lexer** (`src/lexer.py`): Tokenizes Telugu code, handles multi-word keywords
+- **Keywords** (`src/keywords.py`): Telugu-Python keyword mappings
+- **Parser** (planned): Builds Abstract Syntax Tree from tokens
+- **Code Generator** (planned): Converts AST to Python code
 
-3. **Code Generation**
-   - Walks through the AST
-   - Generates equivalent Python code
-   - Maintains proper indentation and structure
+## 🧪 Testing
 
-### Key Design Decisions
+```bash
+# Run all tests
+source venv/bin/activate
+python -m pytest tests/
 
-#### 1. **Telugu Syntax Patterns**
-We're adapting Telugu grammatical structures to programming:
+# Run specific tests
+python tests/test_lexer.py
 
-**Conditionals:** Telugu uses a different word order
-```telugu
-okavela x > 5 aite:     # "if x greater-than 5 then:"
-    cheppu("x is big")
-```
-Becomes:
-```python
-if x > 5:
-    print("x is big")
+# Run with coverage
+python -m pytest tests/ --cov=src
 ```
 
-**Loops:** More natural Telugu phrasing
+## 📊 Current Status
+
+- ✅ **Lexer**: Complete with multi-word keyword support
+- ✅ **Keywords**: 15+ Telugu-Python mappings implemented
+- ✅ **Testing**: Comprehensive test suite for lexer
+- 🔄 **Parser**: In development
+- 🔄 **Code Generator**: In development
+- 🔄 **CLI Interface**: Planned
+
+## 🎯 Example Program
+
+**Input (Telugu/Tenglish):**
 ```telugu
-list_name lo prati item ki :     # "for-each item in list_name:"
-x < 10 aite:          # "while x less-than 10:"
-```
-
-#### 2. **Keyword Choices**
-Selected Telugu words that convey programming concepts intuitively:
-- `vidhanam` (function) → `def` 
-- `ivvu` (give) → `return`
-- `aagu` (stop) → `break`
-- `munduku` (forward) → `continue`
-- `nijam/abaddham` (truth/falsehood) → `True/False`
-
-#### 3. **Mixed Language Support**
-- Variable names can be in English or Telugu
-- String literals remain unchanged
-- Comments can be in any language
-
-## Implementation Approach
-
-### Phase 1: Core Transpiler (Current)
-Using **Test-Driven Development (TDD)**:
-1. Write tests for each feature first
-2. Implement minimal code to pass tests
-3. Refactor and optimize
-
-**Technology Stack:**
-- Python for implementation
-- PLY (Python Lex-Yacc) for parsing
-- pytest for testing
-
-## Example: Complete Program
-
-**Telugu/Tenglish Code:**
-```telugu
-# Fibonacci series in Telugu
-vidhanam fibonacci(n):
+# Factorial calculation
+vidhanam factorial(n):
     okavela n <= 1 aite:
-        n ivvu
+        1 ivvu
     lekapothe:
-        fibonacci(n-1) + fibonacci(n-2) ivvu
+        n * factorial(n-1) ivvu
 
-# Print first 10 Fibonacci numbers
-prati varusa(10) lo i ki:
-    result = fibonacci(i)
-    cheppu("Fibonacci", i, ":", result)
+# Calculate and print
+result = factorial(5)
+("Factorial of 5 is:", result)cheppu
 ```
 
-**Generated Python:**
+**Output (Python):**
 ```python
-# Fibonacci series in Telugu
-def fibonacci(n):
+# Factorial calculation
+def factorial(n):
     if n <= 1:
-        return n
+        return 1
     else:
-        return fibonacci(n-1) + fibonacci(n-2)
+        return n * factorial(n-1)
 
-# Print first 10 Fibonacci numbers
-for i in range(10):
-    result = fibonacci(i)
-    print("Fibonacci", i, ":", result)
+# Calculate and print
+result = factorial(5)
+print("Factorial of 5 is:", result)
 ```
 
-## Why This Matters
+## 🌟 Why Brahmic Engine?
 
-1. **Educational Impact**: Students can learn programming concepts without the English barrier
+1. **Educational Impact**: Learn programming without English language barriers
 2. **Cultural Preservation**: Brings technology to native languages
-3. **Cognitive Benefits**: Thinking and coding in the same language improves understanding
-4. **Inclusivity**: Makes programming accessible to millions of Telugu speakers
-5. **Scalable Model**: Can be adapted for other Indian languages with similar scripts
+3. **Cognitive Benefits**: Code in your thinking language
+4. **Accessibility**: Makes programming inclusive for millions
+5. **Scalable**: Template for other Indian languages
 
-## Current Progress
+## 🔧 Development
 
-We've implemented:
-- ✅ Keyword mappings for all major Python constructs
-- ✅ Test suite with 20+ test cases
-- ✅ Basic transpiler structure
-- 🔄 Working on lexer and parser implementation
+### Project Structure
 
-The goal is to create a fully functional transpiler that can handle real-world Telugu programs while maintaining Python's simplicity and power.
+```
+brahmic-engine/
+├── src/
+│   ├── __init__.py
+│   ├── lexer.py              # Tokenizer for Telugu/Tenglish
+│   ├── keywords.py           # Telugu-Python keyword mappings
+│   ├── parser.py             # Parser to build AST (planned)
+│   ├── ast_nodes.py          # AST node definitions (planned)
+│   ├── code_generator.py     # Generate Python from AST (planned)
+│   └── transpiler.py         # Main transpiler orchestrator (planned)
+├── tests/
+│   ├── test_lexer.py
+│   └── fixtures/             # Test programs in Telugu
+├── examples/
+│   └── sample_programs/
+├── python_to_tenglish_examples.md  # Language development examples
+├── requirements.txt
+└── README.md
+```
+
+### Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+### Dependencies
+
+- **PLY (Python Lex-Yacc)**: Lexing and parsing
+- **pytest**: Testing framework
+- **black**: Code formatting
+- **mypy**: Type checking
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Telugu language community for inspiration
+- PLY developers for the excellent parsing toolkit
+- All contributors making programming more inclusive
+
+## 📞 Contact
+
+- **Project**: [Brahmic Engine](https://github.com/your-username/brahmic-engine)
+- **Issues**: [GitHub Issues](https://github.com/your-username/brahmic-engine/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/your-username/brahmic-engine/discussions)
+
+---
+
+*Making programming accessible in every language, one transpiler at a time.*
