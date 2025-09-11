@@ -134,15 +134,18 @@ class TengLexer:
             t.type = 'TELUGU_KEYWORD'
         return t
     
-    def t_CONDITIONAL_PATTERN(self, t):
-        r'okavela\s+[^:]+\s+aite'
-        """Handle conditional pattern: okavela condition aite"""
-        # Extract condition between okavela and aite
-        match = re.match(r'okavela\s+(.+?)\s+aite', t.value)
-        if match:
-            condition = match.group(1)
-            t.value = f'if {condition}'
-            t.type = 'TELUGU_KEYWORD'
+    def t_OKAVELA(self, t):
+        r'okavela'
+        """Handle okavela keyword"""
+        t.value = 'if'
+        t.type = 'TELUGU_KEYWORD'
+        return t
+    
+    def t_AITE(self, t):
+        r'aite'
+        """Handle aite keyword"""
+        t.value = ''  # This becomes part of the if syntax, consumed during parsing
+        t.type = 'TELUGU_KEYWORD'
         return t
     
     def t_IDENTIFIER(self, t):
