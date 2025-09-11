@@ -19,13 +19,13 @@ try:
         UNCHANGED_FUNCTIONS
     )
 except ImportError:
-    from keywords import (
-        ALL_KEYWORDS, 
-        MULTI_WORD_KEYWORDS, 
-        SINGLE_WORD_KEYWORDS,
-        SPECIAL_PATTERNS,
-        UNCHANGED_FUNCTIONS
-    )
+    # Fallback for direct execution
+    import keywords as kw_module
+    ALL_KEYWORDS = kw_module.ALL_KEYWORDS
+    MULTI_WORD_KEYWORDS = kw_module.MULTI_WORD_KEYWORDS
+    SINGLE_WORD_KEYWORDS = kw_module.SINGLE_WORD_KEYWORDS
+    SPECIAL_PATTERNS = kw_module.SPECIAL_PATTERNS
+    UNCHANGED_FUNCTIONS = kw_module.UNCHANGED_FUNCTIONS
 
 class TengLexer:
     """Telugu/Tenglish lexer using PLY."""
