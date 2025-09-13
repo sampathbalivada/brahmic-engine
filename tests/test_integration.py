@@ -196,7 +196,7 @@ lekapothe:
     ("Cannot drive")cheppu
 
 is_weekend = Abaddam
-okavela is_weekend avvakapote aite:
+okavela is_weekend avvakapote:
     ("It's a weekday")cheppu'''
 
         expected_python = '''age = 20
@@ -288,7 +288,7 @@ result = factorial(5)
     if n <= 1:
         return 1
     else:
-        return n * factorial(n-1)
+        return n * factorial(n - 1)
 
 result = factorial(5)
 print("Factorial of 5 is:", result)'''
@@ -392,6 +392,68 @@ class TestErrorHandling:
             with pytest.raises(Exception):  # Should raise some parse error
                 self.transpile(error_code)
 
+    def test_empty_control_structure_errors(self):
+        """Test that empty control structures raise syntax errors during transpilation."""
+
+        empty_structure_errors = [
+            'okavela x > 5 aite:',           # Empty if statement
+            'okavela x == 0 aite:\nlekapothe:\n    y = 1',  # Empty then block with else
+            'range(10) lo i ki:',            # Empty for loop
+            'x < 100 unnanta varaku:',       # Empty while loop
+            'vidhanam test():\n',            # Empty function (if we add this validation)
+        ]
+
+        for error_code in empty_structure_errors:
+            with pytest.raises(SyntaxError, match="cannot have empty body|Transpilation failed"):
+                self.transpile(error_code)
+
+        # Test that the same structures with bodies work correctly
+        valid_structures = [
+            ('okavela x > 5 aite:\n    y = 10', 'if x > 5:\n    y = 10'),
+            ('range(3) lo i ki:\n    (i)cheppu', 'for i in range(3):\n    print(i)'),
+            ('x < 10 unnanta varaku:\n    x = x + 1', 'while x < 10:\n    x = x + 1'),
+        ]
+
+        for telugu_code, expected_python in valid_structures:
+            try:
+                result = self.transpile(telugu_code)
+                assert result.strip() == expected_python.strip()
+            except Exception as e:
+                pytest.fail(f"Valid control structure should transpile successfully: {telugu_code}. Error: {e}")
+
+    def test_in_operator_transpilation(self):
+        """Test that 'in' operator transpiles correctly."""
+
+        # Test cases with 'in' operator
+        in_operator_cases = [
+            # Simple membership test
+            ('result = "a" in ["a", "b", "c"]',
+             'result = "a" in ["a", "b", "c"]'),
+
+            # In conditional statement
+            ('okavela "telugu" in ["telugu", "english"] aite:\n    ("Found")cheppu',
+             'if "telugu" in ["telugu", "english"]:\n    print("Found")'),
+
+            # Complex expression with logical operators
+            ('okavela user in ["admin", "mod"] mariyu active aite:\n    ("Access granted")cheppu',
+             'if (user in ["admin", "mod"]) and active:\n    print("Access granted")'),
+
+            # In assignment with complex expression
+            ('is_member = name in member_list mariyu status == "active"',
+             'is_member = (name in member_list) and status == "active"'),
+
+            # Multiple in operations
+            ('okavela "x" in list1 mariyu "y" in list2 aite:\n    result = Nijam',
+             'if ("x" in list1) and ("y" in list2):\n    result = True'),
+        ]
+
+        for telugu_code, expected_python in in_operator_cases:
+            try:
+                result = self.transpile(telugu_code)
+                assert result.strip() == expected_python.strip(), f"Failed for: {telugu_code}\nGot: {result}\nExpected: {expected_python}"
+            except Exception as e:
+                pytest.fail(f"'in' operator transpilation failed for: {telugu_code}. Error: {e}")
+
     def test_semantic_errors(self):
         """Test semantic errors are detected."""
         semantic_errors = [
@@ -443,7 +505,6 @@ class TestTranspilerComponents:
 
         if TengParser:
             self.parser = TengParser()
-            self.parser.build()
         else:
             self.parser = None
 
@@ -457,9 +518,9 @@ class TestTranspilerComponents:
         if not self.parser:
             pytest.skip("Parser not implemented yet - TDD phase")
 
-        code = 'okavela x > 5 aite:'
+        code = 'okavela x > 5 aite:\n    x = 10'
         tokens = self.lexer.tokenize(code)
-        ast = self.parser.parse(tokens)
+        ast = self.parser.parse(code)
 
         # Should produce valid AST
         assert ast is not None
@@ -470,32 +531,38 @@ class TestTranspilerComponents:
 
     def test_parser_to_codegen_integration(self):
         """Test that parser AST works properly with code generator."""
-        if not self.parser or not self.code_generator:
-            pytest.skip("Parser or CodeGenerator not implemented yet - TDD phase")
+        if not self.parser:
+            pytest.skip("Parser not implemented yet - TDD phase")
 
         code = '("Hello")cheppu'
         tokens = self.lexer.tokenize(code)
-        ast = self.parser.parse(tokens)
-        python_code = self.code_generator.generate(ast)
+        ast = self.parser.parse(code)
+        # Code generation is handled by AST node's to_python() method
+        python_code = ast.to_python()
 
         assert python_code.strip() == 'print("Hello")'
 
     def test_full_pipeline(self):
         """Test complete lexer -> parser -> codegen pipeline."""
-        if not self.parser or not self.code_generator:
-            pytest.skip("Components not implemented yet - TDD phase")
+        if not self.parser:
+            pytest.skip("Parser not implemented yet - TDD phase")
 
         test_cases = [
             ('x = 5', 'x = 5'),
             ('("test")cheppu', 'print("test")'),
-            ('okavela x aite:', 'if x:'),
         ]
 
         for telugu, expected_python in test_cases:
             tokens = self.lexer.tokenize(telugu)
-            ast = self.parser.parse(tokens)
-            python_code = self.code_generator.generate(ast)
+            ast = self.parser.parse(telugu)
+            # Code generation is handled by AST node's to_python() method
+            python_code = ast.to_python()
             assert python_code.strip() == expected_python
+
+        # Test that empty if statement raises syntax error
+        with pytest.raises(SyntaxError, match="If statement cannot have empty body"):
+            tokens = self.lexer.tokenize('okavela x aite:')
+            ast = self.parser.parse('okavela x aite:')
 
 
 class TestPerformance:

@@ -67,10 +67,15 @@ class Program(ASTNode):
             return ""
 
         python_lines = []
-        for stmt in self.statements:
+        for i, stmt in enumerate(self.statements):
             python_code = stmt.to_python(indent_level)
             if python_code.strip():  # Only add non-empty lines
                 python_lines.append(python_code)
+
+                # Add blank line after certain statement types
+                if (i < len(self.statements) - 1 and  # Not the last statement
+                    isinstance(stmt, (ForStatement, WhileStatement, IfStatement, FunctionDefinition))):
+                    python_lines.append("")  # Add blank line
 
         return '\n'.join(python_lines)
 
@@ -96,7 +101,8 @@ class ElifBlock(ASTNode):
             for stmt in self.body:
                 result += stmt.to_python(indent_level + 1) + '\n'
         else:
-            result += self._indent(indent_level + 1) + 'pass\n'
+            # This should never happen since parser now validates non-empty blocks
+            raise ValueError("For loop has empty body - this should be caught during parsing")
 
         return result.rstrip()
 
@@ -200,6 +206,7 @@ class BinaryOperation(Expression):
         if isinstance(self.right, BinaryOperation) and self._needs_parentheses(self.right, False):
             right_code = f'({right_code})'
 
+        # Always use spaces around operators
         return f'{left_code} {self.operator} {right_code}'
 
     def _needs_parentheses(self, child: 'BinaryOperation', is_left: bool) -> bool:
@@ -213,6 +220,7 @@ class BinaryOperation(Expression):
             # Right associative operators need parentheses on the right
             return True
         return False
+
 
     def _get_precedence(self, operator: str) -> int:
         """Get operator precedence (higher number = higher precedence)."""
@@ -337,7 +345,8 @@ class IfStatement(Statement):
             for stmt in self.then_block:
                 result += stmt.to_python(indent_level + 1) + '\n'
         else:
-            result += self._indent(indent_level + 1) + 'pass\n'
+            # This should never happen since parser now validates non-empty blocks
+            raise ValueError("If statement has empty then_block - this should be caught during parsing")
 
         # Elif blocks
         for elif_block in self.elif_blocks:
@@ -375,7 +384,8 @@ class ForStatement(Statement):
             for stmt in self.body:
                 result += stmt.to_python(indent_level + 1) + '\n'
         else:
-            result += self._indent(indent_level + 1) + 'pass\n'
+            # This should never happen since parser now validates non-empty blocks
+            raise ValueError("For loop has empty body - this should be caught during parsing")
 
         return result.rstrip()
 
@@ -400,7 +410,8 @@ class WhileStatement(Statement):
             for stmt in self.body:
                 result += stmt.to_python(indent_level + 1) + '\n'
         else:
-            result += self._indent(indent_level + 1) + 'pass\n'
+            # This should never happen since parser now validates non-empty blocks
+            raise ValueError("While loop has empty body - this should be caught during parsing")
 
         return result.rstrip()
 
@@ -428,7 +439,8 @@ class FunctionDefinition(Statement):
             for stmt in self.body:
                 result += stmt.to_python(indent_level + 1) + '\n'
         else:
-            result += self._indent(indent_level + 1) + 'pass\n'
+            # This should never happen since parser now validates non-empty blocks
+            raise ValueError("Function has empty body - this should be caught during parsing")
 
         return result.rstrip()
 
@@ -459,3 +471,49 @@ class ContinueStatement(Statement):
 
     def to_python(self, indent_level: int = 0) -> str:
         return f'{self._indent(indent_level)}continue'
+
+
+class ExpressionStatement(Statement):
+    """Represents a statement that consists of a single expression."""
+
+    def __init__(self, expression: Expression):
+        self.expression = expression
+
+    def __repr__(self):
+        return f'ExpressionStatement(expr={repr(self.expression)})'
+
+    def to_python(self, indent_level: int = 0) -> str:
+        return f'{self._indent(indent_level)}{self.expression.to_python()}'
+
+
+class MethodCall(Expression):
+    """Represents method calls like object.method(args)."""
+
+    def __init__(self, object_expr: Expression, method_name: str, arguments: list[Expression]):
+        self.object_expr = object_expr
+        self.method_name = method_name
+        self.arguments = arguments
+
+    def __repr__(self):
+        args_repr = ', '.join(repr(arg) for arg in self.arguments)
+        return f'MethodCall(object={repr(self.object_expr)}, method={self.method_name}, args=[{args_repr}])'
+
+    def to_python(self, indent_level: int = 0) -> str:
+        object_code = self.object_expr.to_python()
+        args_code = ', '.join(arg.to_python() for arg in self.arguments)
+        return f'{object_code}.{self.method_name}({args_code})'
+
+
+class AttributeAccess(Expression):
+    """Represents attribute access like object.attribute."""
+
+    def __init__(self, object_expr: Expression, attribute_name: str):
+        self.object_expr = object_expr
+        self.attribute_name = attribute_name
+
+    def __repr__(self):
+        return f'AttributeAccess(object={repr(self.object_expr)}, attribute={self.attribute_name})'
+
+    def to_python(self, indent_level: int = 0) -> str:
+        object_code = self.object_expr.to_python()
+        return f'{object_code}.{self.attribute_name}'

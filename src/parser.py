@@ -94,30 +94,49 @@ class TengParser:
         return indent
 
     def _parse_indented_block(self, stream, base_indent=0):
-        """Parse an indented block of statements."""
+        """Parse an indented block of statements using proper indentation analysis."""
         statements = []
 
         # Skip any immediate newlines
         while stream.match('NEWLINE'):
             stream.consume()
 
-        # Look for indented statements
+        # If we don't have source lines or token line info, fall back to simple parsing
+        if not hasattr(self, 'source_lines') or not hasattr(stream.peek(), 'lineno'):
+            return self._parse_simple_block(stream)
+
+        # Parse statements while they remain at the expected indentation level
         while not stream.at_end():
-            # Skip newlines within blocks
+            # Skip single newlines
             if stream.match('NEWLINE'):
+                newline_token = stream.peek()
+                # Check for empty lines (multiple newlines)
+                if newline_token and '\n\n' in newline_token.value:
+                    # Empty line detected - end the block
+                    stream.consume()
+                    break
                 stream.consume()
                 continue
 
-            # Check if we're looking at the start of a new line
             current_token = stream.peek()
             if not current_token:
                 break
 
-            # For simplicity, if we hit a new statement that looks like it's at the same level
-            # as the parent (like 'lekapothe'), we stop parsing the block
+            # Check for control structure keywords that indicate same-level statements
             if (current_token.type == 'TELUGU_KEYWORD' and
                 current_token.value in ['else', 'elif']):
                 break
+
+            # Get the line number and check indentation
+            if hasattr(current_token, 'lineno'):
+                line_num = current_token.lineno - 1  # Convert to 0-based
+                if line_num < len(self.source_lines):
+                    line_text = self.source_lines[line_num]
+                    current_indent = self._calculate_line_indent(line_text)
+
+                    # If current line is back to base indentation or less, end the block
+                    if current_indent <= base_indent:
+                        break
 
             # Parse the statement
             stmt = self._parse_statement(stream)
@@ -127,6 +146,45 @@ class TengParser:
                 break
 
         return statements
+
+    def _parse_simple_block(self, stream):
+        """Fallback simple block parsing when indentation analysis isn't available."""
+        statements = []
+
+        while not stream.at_end():
+            if stream.match('NEWLINE'):
+                newline_token = stream.consume()
+                if '\n\n' in newline_token.value:
+                    break
+                continue
+
+            current_token = stream.peek()
+            if not current_token:
+                break
+
+            if (current_token.type == 'TELUGU_KEYWORD' and
+                current_token.value in ['else', 'elif']):
+                break
+
+            stmt = self._parse_statement(stream)
+            if stmt:
+                statements.append(stmt)
+            else:
+                break
+
+        return statements
+
+    def _calculate_line_indent(self, line):
+        """Calculate the indentation level of a line."""
+        indent = 0
+        for char in line:
+            if char == ' ':
+                indent += 1
+            elif char == '\t':
+                indent += 8
+            else:
+                break
+        return indent
 
     def _parse_program(self, stream):
         """Parse a complete program."""
@@ -146,10 +204,54 @@ class TengParser:
 
     def _is_telugu_return_statement(self, stream):
         """Check if current position is a Telugu return statement: expr ivvu"""
-        # Look for pattern: expr TELUGU_KEYWORD('return')
-        next_token = stream.peek(1)
-        return (next_token and next_token.type == 'TELUGU_KEYWORD' and
-                next_token.value == 'return')
+        # Look ahead for TELUGU_KEYWORD('return') within the current logical line
+        pos = 1
+        depth = 0
+
+        while pos < len(stream.tokens) - stream.pos:
+            token = stream.peek(pos)
+            if not token:
+                break
+
+            # Stop at newline (end of logical line)
+            if token.type == 'NEWLINE':
+                break
+
+            # Track parentheses depth
+            if token.type == 'LPAREN':
+                depth += 1
+            elif token.type == 'RPAREN':
+                depth -= 1
+            elif token.type == 'TELUGU_KEYWORD' and token.value == 'return':
+                # Found 'ivvu' - this is a return statement
+                return True
+
+            pos += 1
+
+        return False
+
+    def _is_telugu_postfix_print(self, stream):
+        """Check if current position is a Telugu postfix print: (args)cheppu"""
+        # Look for pattern: LPAREN ... TELUGU_KEYWORD('print')
+        if stream.peek() and stream.peek().type == 'LPAREN':
+            pos = 0
+            depth = 0
+            while pos < len(stream.tokens) - stream.pos:
+                token = stream.peek(pos)
+                if not token:
+                    break
+
+                if token.type == 'LPAREN':
+                    depth += 1
+                elif token.type == 'RPAREN':
+                    depth -= 1
+                    if depth == 0:
+                        # Check if next token is cheppu
+                        next_token = stream.peek(pos + 1)
+                        return (next_token and next_token.type == 'TELUGU_KEYWORD' and
+                                next_token.value == 'print')
+                pos += 1
+        return False
 
     def _is_telugu_for_loop(self, stream):
         """Check if current position is a Telugu for loop: expr lo var ki:"""
@@ -204,23 +306,66 @@ class TengParser:
 
         return False
 
+    def _is_incomplete_for_loop(self, stream):
+        """Check if current position looks like an incomplete for loop: expr lo var (missing ki)"""
+        # Look for pattern: EXPRESSION lo IDENTIFIER (missing ki/colon)
+        pos = 0
+        depth = 0
+
+        while pos < len(stream.tokens) - stream.pos:
+            token = stream.peek(pos)
+            if not token:
+                break
+
+            if token.type == 'LPAREN':
+                depth += 1
+            elif token.type == 'RPAREN':
+                depth -= 1
+            elif (depth == 0 and token.type == 'TELUGU_KEYWORD' and
+                  token.value == 'in'):  # 'lo' maps to 'in'
+                # Found 'lo', check for incomplete pattern
+                var_token = stream.peek(pos + 1)
+                ki_token = stream.peek(pos + 2)
+
+                if (var_token and var_token.type == 'IDENTIFIER'):
+                    # We have 'expr lo var' but need to check if ki: follows
+                    if not ki_token or ki_token.type != 'TELUGU_KEYWORD':
+                        # Missing 'ki' - this is an incomplete for loop
+                        return True
+                    elif ki_token.type == 'TELUGU_KEYWORD':
+                        colon_token = stream.peek(pos + 3)
+                        if not colon_token or colon_token.type != 'COLON':
+                            # Have 'expr lo var ki' but missing ':' - incomplete
+                            return True
+                # If we get here, it's a complete for loop pattern
+                return False
+            pos += 1
+
+        return False
+
     def _parse_statement(self, stream):
         """Parse a single statement."""
         current = stream.peek()
         if not current:
             return None
 
-        # First, check for Telugu patterns that span multiple tokens
-        if self._is_telugu_return_statement(stream):
+        # Handle direct token types first (most reliable)
+        if current.type == 'TELUGU_KEYWORD':
+            return self._parse_telugu_statement(stream)
+        elif current.type == 'CHEPPU':
+            return self._parse_print_statement(stream)
+
+        # Then check for Telugu patterns that span multiple tokens
+        elif self._is_telugu_return_statement(stream):
             return self._parse_telugu_return_statement(stream)
+        elif self._is_telugu_postfix_print(stream):
+            return self._parse_telugu_postfix_print(stream)
         elif self._is_telugu_for_loop(stream):
             return self._parse_telugu_for_loop(stream)
         elif self._is_telugu_while_loop(stream):
             return self._parse_telugu_while_loop(stream)
 
-        # Handle simple statement types
-        elif current.type == 'CHEPPU':
-            return self._parse_print_statement(stream)
+        # Handle remaining simple statement types
         elif current.type == 'IDENTIFIER':
             # Look ahead to see what kind of statement this is
             next_token = stream.peek(1)
@@ -231,6 +376,9 @@ class TengParser:
                 # Telugu return statement: value ivvu
                 return self._parse_telugu_return_statement(stream)
             else:
+                # Check for incomplete for loop patterns before falling back to expression
+                if self._is_incomplete_for_loop(stream):
+                    raise SyntaxError("Incomplete for loop: missing 'ki' or ':'")
                 # Function call or other expression
                 return self._parse_expression_statement(stream)
         elif current.type == 'TELUGU_KEYWORD':
@@ -298,6 +446,10 @@ class TengParser:
         # Parse the loop body
         body = self._parse_block(stream)
 
+        # Check if body is empty - this should be a syntax error
+        if not body:
+            raise SyntaxError("For loop cannot have empty body. Expected indented statements after ':'.")
+
         return ForStatement(variable, iterable, body)
 
     def _parse_telugu_while_loop(self, stream):
@@ -316,7 +468,58 @@ class TengParser:
         # Parse the loop body
         body = self._parse_block(stream)
 
+        # Check if body is empty - this should be a syntax error
+        if not body:
+            raise SyntaxError("While loop cannot have empty body. Expected indented statements after ':'.")
+
         return WhileStatement(condition, body)
+
+    def _parse_preprocessed_for_loop(self, stream, for_statement):
+        """Parse preprocessed for loop from lexer: 'for var in iterable'"""
+        # Parse the for statement: "for var in iterable"
+        # Expected format: "for {variable} in {iterable}"
+        parts = for_statement.split()
+        if len(parts) != 4 or parts[0] != 'for' or parts[2] != 'in':
+            raise SyntaxError(f"Invalid for loop format: {for_statement}")
+
+        variable = parts[1]
+        iterable_name = parts[3]
+
+        # Create identifier for the iterable
+        iterable = Identifier(iterable_name)
+
+        # Expect colon
+        stream.expect('COLON')
+
+        # Parse the loop body
+        body = self._parse_block(stream)
+
+        return ForStatement(variable, iterable, body)
+
+    def _parse_telugu_postfix_print(self, stream):
+        """Parse Telugu postfix print: (args)cheppu"""
+        # Expect opening parenthesis
+        stream.expect('LPAREN')
+
+        # Parse arguments
+        arguments = []
+        while not stream.match('RPAREN'):
+            arg = self._parse_expression(stream)
+            arguments.append(arg)
+
+            if stream.match('COMMA'):
+                stream.consume()
+            elif not stream.match('RPAREN'):
+                raise SyntaxError("Expected ',' or ')' in print statement")
+
+        stream.expect('RPAREN')
+
+        # Expect cheppu keyword
+        cheppu_token = stream.expect('TELUGU_KEYWORD')
+        if cheppu_token.value != 'print':
+            raise SyntaxError(f"Expected 'cheppu' (print), got '{cheppu_token.value}'")
+
+        return PrintStatement(arguments)
 
     def _parse_expression_until_while(self, stream):
         """Parse expression tokens until we hit the 'while' keyword."""
@@ -381,6 +584,8 @@ class TengParser:
             return BreakStatement()
         elif keyword_value == 'continue':  # munduku vellu -> continue
             return ContinueStatement()
+        elif keyword_value.startswith('for '):  # Preprocessed for loop: "for var in iterable"
+            return self._parse_preprocessed_for_loop(stream, keyword_value)
         else:
             # Handle other cases or return None
             return None
@@ -402,6 +607,10 @@ class TengParser:
 
         stream.expect('COLON')
         then_block = self._parse_block(stream)
+
+        # Check if then block is empty - this should be a syntax error
+        if not then_block:
+            raise SyntaxError("If statement cannot have empty body. Expected indented statements after ':'.")
 
         # Handle elif and else
         elif_blocks = []
@@ -452,6 +661,11 @@ class TengParser:
         stream.expect('COLON')
 
         body = self._parse_block(stream)
+
+        # Check if body is empty - this should be a syntax error
+        if not body:
+            raise SyntaxError("Function cannot have empty body. Expected indented statements after ':'.")
+
         return FunctionDefinition(name_token.value, parameters, body)
 
     def _parse_telugu_return_statement(self, stream):
@@ -478,14 +692,48 @@ class TengParser:
 
     def _parse_block(self, stream):
         """Parse a block of statements (indented or single-line)."""
-        # Use the new indented block parsing method
-        return self._parse_indented_block(stream)
+        # Calculate the base indentation level from the current context
+        base_indent = self._get_current_indentation_level(stream)
+        return self._parse_indented_block(stream, base_indent)
+
+    def _get_current_indentation_level(self, stream):
+        """Get the current indentation level for block parsing."""
+        # Return the indentation level of the PARENT block, not the child block
+        # For control structures, we need to find the indentation of the control statement itself
+
+        # Look backwards to find a token from before the NEWLINE to get parent indentation
+        pos = 0
+        parent_token = None
+
+        # Find a token that's on the current line (before the NEWLINE)
+        while pos < len(stream.tokens) - stream.pos:
+            token = stream.peek(pos)
+            if token and token.type == 'NEWLINE':
+                # Found newline, look backwards for parent token
+                if pos > 0:
+                    parent_token = stream.peek(pos - 1)  # Token before newline
+                break
+            pos += 1
+
+        # If we can't find parent token, try current token
+        if not parent_token:
+            parent_token = stream.peek()
+
+        if not parent_token or not hasattr(parent_token, 'lineno'):
+            return 0
+
+        # Get the indentation of the parent line
+        line_num = parent_token.lineno - 1  # Convert to 0-based
+        if hasattr(self, 'source_lines') and line_num < len(self.source_lines):
+            line_text = self.source_lines[line_num]
+            return self._calculate_line_indent(line_text)
+
+        return 0
 
     def _parse_expression_statement(self, stream):
         """Parse expression as statement."""
         expr = self._parse_expression(stream)
-        # For now, we'll skip standalone expressions
-        return None
+        return ExpressionStatement(expr)
 
     def _parse_expression(self, stream):
         """Parse an expression."""
@@ -536,7 +784,7 @@ class TengParser:
         """Parse comparison expressions."""
         expr = self._parse_addition(stream)
 
-        while stream.match('LT', 'LE', 'GT', 'GE'):
+        while stream.match('LT', 'LE', 'GT', 'GE', 'IN'):
             op_token = stream.consume()
             right = self._parse_addition(stream)
             expr = BinaryOperation(expr, op_token.value, right)
@@ -558,7 +806,7 @@ class TengParser:
         """Parse multiplication/division."""
         expr = self._parse_unary(stream)
 
-        while stream.match('TIMES', 'DIVIDE'):
+        while stream.match('TIMES', 'DIVIDE', 'MODULO'):
             op_token = stream.consume()
             right = self._parse_unary(stream)
             expr = BinaryOperation(expr, op_token.value, right)
@@ -600,25 +848,56 @@ class TengParser:
 
         elif current.type == 'IDENTIFIER':
             stream.consume()
+            expr = Identifier(current.value)
 
-            # Check for function call
-            if stream.match('LPAREN'):
-                stream.consume()  # consume (
+            # Handle dot notation and function calls in a loop
+            while True:
+                if stream.match('DOT'):
+                    # Handle method call: object.method(args)
+                    stream.consume()  # consume .
+                    method_token = stream.expect('IDENTIFIER')
+                    method_name = method_token.value
 
-                arguments = []
-                while not stream.match('RPAREN'):
-                    arg = self._parse_expression(stream)
-                    arguments.append(arg)
+                    if stream.match('LPAREN'):
+                        # Method call with arguments
+                        stream.consume()  # consume (
 
-                    if stream.match('COMMA'):
-                        stream.consume()
-                    elif not stream.match('RPAREN'):
-                        raise SyntaxError("Expected ',' or ')' in function call")
+                        arguments = []
+                        while not stream.match('RPAREN'):
+                            arg = self._parse_expression(stream)
+                            arguments.append(arg)
 
-                stream.expect('RPAREN')
-                return FunctionCall(current.value, arguments)
-            else:
-                return Identifier(current.value)
+                            if stream.match('COMMA'):
+                                stream.consume()
+                            elif not stream.match('RPAREN'):
+                                raise SyntaxError("Expected ',' or ')' in method call")
+
+                        stream.expect('RPAREN')
+                        expr = MethodCall(expr, method_name, arguments)
+                    else:
+                        # Attribute access: object.attribute
+                        expr = AttributeAccess(expr, method_name)
+
+                elif stream.match('LPAREN'):
+                    # Function call: function(args)
+                    stream.consume()  # consume (
+
+                    arguments = []
+                    while not stream.match('RPAREN'):
+                        arg = self._parse_expression(stream)
+                        arguments.append(arg)
+
+                        if stream.match('COMMA'):
+                            stream.consume()
+                        elif not stream.match('RPAREN'):
+                            raise SyntaxError("Expected ',' or ')' in function call")
+
+                    stream.expect('RPAREN')
+                    expr = FunctionCall(expr.name if isinstance(expr, Identifier) else str(expr), arguments)
+                else:
+                    break
+
+            return expr
 
         elif current.type == 'TELUGU_KEYWORD':
             # Handle Telugu boolean literals

@@ -24,7 +24,7 @@ lekapothe:
 
 # NOT Operations
 is_weekend = Abaddam
-okavela is_weekend avvakapote aite:
+okavela is_weekend avvakapote:
     ("It's a weekday")cheppu
 lekapothe:
     ("It's weekend")cheppu

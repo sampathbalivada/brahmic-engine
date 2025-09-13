@@ -27,7 +27,7 @@ class TestTengLexer:
         tokens = self.lexer.tokenize(code)
         
         # Should recognize the print pattern
-        assert any(token.type == 'CHEPPU' for token in tokens)
+        assert any(token.type == 'TELUGU_KEYWORD' and token.value == 'print' for token in tokens)
     
     def test_simple_variables(self):
         """Test variable assignment."""
@@ -150,14 +150,36 @@ class TestTengLexer:
         assert len(identifiers) > 0  # English variables
         assert len(telugu_kw) > 0    # Telugu keywords
     
+    def test_in_operator(self):
+        """Test 'in' operator tokenization."""
+        code = '"telugu" in ["telugu", "programming"]'
+        tokens = list(self.lexer.tokenize(code))
+
+        # Should have STRING, IN, LBRACKET, STRING, COMMA, STRING, RBRACKET
+        token_types = [token.type for token in tokens]
+        token_values = [token.value for token in tokens]
+
+        assert 'IN' in token_types
+        assert token_values[token_types.index('IN')] == 'in'
+
+        # Test in conditional context
+        code = 'okavela "x" in ["x", "y"] aite:'
+        tokens = list(self.lexer.tokenize(code))
+        token_types = [token.type for token in tokens]
+
+        assert 'TELUGU_KEYWORD' in token_types  # okavela -> if
+        assert 'IN' in token_types
+        assert 'TELUGU_KEYWORD' in token_types  # aite -> ''
+        assert 'COLON' in token_types
+
     def test_complex_program(self):
         """Test a complete small program."""
         code = '''vidhanam greet(name):
     ("Hello", name)cheppu
     "Welcome" ivvu'''
-        
+
         tokens = self.lexer.tokenize(code)
-        
+
         # Should handle function, print, and return
         token_types = [token.type for token in tokens]
         assert 'TELUGU_KEYWORD' in token_types

@@ -178,8 +178,6 @@ Thumbs.db
 *~
 
 # Project specific
-*.te.py
-*.tenglish.py
 examples/output/
 temp/
 scratch/

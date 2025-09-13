@@ -246,20 +246,20 @@ lekapothe:
         """Test logical operators: mariyu, leda, avvakapote"""
 
         # Test AND
-        code = 'okavela age >= 18 mariyu has_license aite:'
+        code = 'okavela age >= 18 mariyu has_license aite:\n    x = 1'
         ast = self.parse_code(code)
         condition = ast.statements[0].condition
         assert isinstance(condition, BinaryOperation)
         assert condition.operator == "and"
 
         # Test OR
-        code = 'okavela age < 18 leda has_permission aite:'
+        code = 'okavela age < 18 leda has_permission aite:\n    x = 1'
         ast = self.parse_code(code)
         condition = ast.statements[0].condition
         assert condition.operator == "or"
 
         # Test NOT
-        code = 'okavela is_weekend avvakapote:'
+        code = 'okavela is_weekend avvakapote:\n    x = 1'
         ast = self.parse_code(code)
         condition = ast.statements[0].condition
         assert isinstance(condition, UnaryOperation)
@@ -337,7 +337,7 @@ lekapothe:
         operators = ["<", "<=", ">", ">=", "==", "!="]
 
         for op in operators:
-            code = f'okavela x {op} 5 aite:'
+            code = f'okavela x {op} 5 aite:\n    x = 1'
             ast = self.parse_code(code)
             condition = ast.statements[0].condition
             assert condition.operator == op
@@ -348,13 +348,92 @@ lekapothe:
             'okavela x aite',  # Missing condition
             'range(5) lo ki:',  # Missing variable
             'vidhanam ():',     # Missing function name
-            '() cheppu',        # Empty print args (should be valid actually)
             'x = ',             # Incomplete assignment
         ]
 
         for code in malformed_codes:
             with pytest.raises(Exception):  # Parser should raise some exception
                 self.parse_code(code)
+
+        # Test that valid empty print doesn't raise exception
+        try:
+            result = self.parse_code('() cheppu')
+            assert result is not None  # Should parse successfully
+        except Exception:
+            pytest.fail("Empty print should be valid syntax")
+
+    def test_empty_control_structure_errors(self):
+        """Test that empty control structures raise syntax errors."""
+
+        # Test empty if statement
+        with pytest.raises(SyntaxError, match="If statement cannot have empty body"):
+            self.parse_code('okavela x > 5 aite:')
+
+        # Test empty if-else statement (empty then block)
+        with pytest.raises(SyntaxError, match="If statement cannot have empty body"):
+            self.parse_code('okavela x > 5 aite:\nlekapothe:\n    y = 10')
+
+        # Test empty for loop
+        with pytest.raises(SyntaxError, match="For loop cannot have empty body"):
+            self.parse_code('range(5) lo i ki:')
+
+        # Test empty while loop
+        with pytest.raises(SyntaxError, match="While loop cannot have empty body"):
+            self.parse_code('x < 10 unnanta varaku:')
+
+        # Test empty function
+        with pytest.raises(SyntaxError, match="Function cannot have empty body"):
+            self.parse_code('vidhanam test():')
+
+        # Test that control structures with bodies work correctly
+        valid_codes = [
+            'okavela x > 5 aite:\n    y = 10',
+            'range(5) lo i ki:\n    ("hello")cheppu',
+            'x < 10 unnanta varaku:\n    x = x + 1',
+            'vidhanam test():\n    x = 5'
+        ]
+
+        for code in valid_codes:
+            try:
+                result = self.parse_code(code)
+                assert result is not None  # Should parse successfully
+            except Exception as e:
+                pytest.fail(f"Valid control structure should parse successfully: {code}. Error: {e}")
+
+    def test_in_operator_parsing(self):
+        """Test parsing of 'in' operator in expressions."""
+
+        # Test simple membership
+        code = 'x = "a" in ["a", "b"]'
+        ast = self.parse_code(code)
+
+        # Should be assignment with binary operation
+        assert len(ast.statements) == 1
+        assignment = ast.statements[0]
+        assert hasattr(assignment, 'value')
+        assert hasattr(assignment.value, 'operator')
+        assert assignment.value.operator == 'in'
+
+        # Test in conditional
+        code = 'okavela "telugu" in ["telugu", "programming"] aite:\n    x = 1'
+        ast = self.parse_code(code)
+
+        assert len(ast.statements) == 1
+        if_stmt = ast.statements[0]
+        assert hasattr(if_stmt, 'condition')
+        assert if_stmt.condition.operator == 'in'
+        assert hasattr(if_stmt.condition, 'left')
+        assert hasattr(if_stmt.condition, 'right')
+
+        # Test complex expression with in
+        code = 'okavela user_type in ["admin", "moderator"] mariyu active aite:\n    y = 2'
+        ast = self.parse_code(code)
+
+        if_stmt = ast.statements[0]
+        # Should be a binary operation with 'and' at the top level
+        assert if_stmt.condition.operator == 'and'
+        # Left side should be the 'in' operation
+        assert if_stmt.condition.left.operator == 'in'
 
 
 class TestParserCodeGeneration:
@@ -367,7 +446,6 @@ class TestParserCodeGeneration:
 
         if TengParser:
             self.parser = TengParser()
-            self.parser.build()
         else:
             self.parser = None
 
@@ -377,7 +455,7 @@ class TestParserCodeGeneration:
             pytest.skip("Parser not implemented yet - TDD phase")
 
         tokens = self.lexer.tokenize(telugu_code)
-        ast = self.parser.parse(tokens)
+        ast = self.parser.parse(telugu_code)
         python_code = ast.to_python()
         return python_code
 

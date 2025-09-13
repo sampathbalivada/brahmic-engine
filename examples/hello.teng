@@ -1,0 +1,10 @@
+vidhanam greet(name):
+    ("Hello", name, "from Telugu!")cheppu
+
+("Welcome to Brahmic Engine")cheppu
+greet("World")
+
+okavela "telugu" in ["telugu", "programming"] aite:
+    ("Telugu programming is awesome!")cheppu
+lekapothe:
+    ("Let's learn Telugu programming!")cheppu

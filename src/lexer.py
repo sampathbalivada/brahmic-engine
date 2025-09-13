@@ -41,9 +41,9 @@ class TengLexer:
         'TELUGU_KEYWORD',
         
         # Operators
-        'PLUS', 'MINUS', 'TIMES', 'DIVIDE',
+        'PLUS', 'MINUS', 'TIMES', 'DIVIDE', 'MODULO',
         'EQUALS', 'LT', 'LE', 'GT', 'GE', 'NE',
-        'ASSIGN',
+        'ASSIGN', 'IN',
         
         # Delimiters
         'LPAREN', 'RPAREN',
@@ -61,6 +61,7 @@ class TengLexer:
     t_MINUS    = r'-'
     t_TIMES    = r'\*'
     t_DIVIDE   = r'/'
+    t_MODULO   = r'%'
     t_EQUALS   = r'=='
     t_LT       = r'<'
     t_LE       = r'<='
@@ -102,16 +103,11 @@ class TengLexer:
         t.value = t.value[1:-1]  # Remove quotes
         return t
     
-    def t_PRINT_POSTFIX(self, t):
-        r'\([^)]*\)\s*cheppu'
-        """Handle postfix print syntax: (args)cheppu"""
-        # Extract the arguments from parentheses
-        match = re.match(r'\(([^)]*)\)\s*cheppu', t.value)
-        if match:
-            args = match.group(1)
-            # Convert to Python print syntax
-            t.value = f'print({args})'
-            t.type = 'CHEPPU'
+    def t_CHEPPU(self, t):
+        r'cheppu'
+        """Handle cheppu (print) keyword"""
+        t.value = 'print'
+        t.type = 'TELUGU_KEYWORD'
         return t
     
     def t_MULTIWORD_KEYWORD(self, t):
@@ -158,6 +154,9 @@ class TengLexer:
             if python_kw:  # Some keywords map to empty string
                 t.value = python_kw
             t.type = 'TELUGU_KEYWORD'
+        elif t.value == 'in':
+            # Handle Python 'in' operator
+            t.type = 'IN'
         else:
             # Regular identifier
             t.type = 'IDENTIFIER'
