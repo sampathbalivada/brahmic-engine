@@ -34,7 +34,6 @@ class TestTengParser:
         # Parser will be None initially during TDD
         if TengParser:
             self.parser = TengParser()
-            self.parser.build()
         else:
             self.parser = None
 
@@ -43,8 +42,7 @@ class TestTengParser:
         if not self.parser:
             pytest.skip("Parser not implemented yet - TDD phase")
 
-        tokens = self.lexer.tokenize(code)
-        ast = self.parser.parse(tokens)
+        ast = self.parser.parse(code)
         return ast
 
     def test_simple_assignment(self):
@@ -261,7 +259,7 @@ lekapothe:
         assert condition.operator == "or"
 
         # Test NOT
-        code = 'okavela is_weekend avvakapote aite:'
+        code = 'okavela is_weekend avvakapote:'
         ast = self.parse_code(code)
         condition = ast.statements[0].condition
         assert isinstance(condition, UnaryOperation)

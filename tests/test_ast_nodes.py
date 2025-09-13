@@ -27,11 +27,14 @@ class TestASTNodeStructure:
         if 'ASTNode' not in globals():
             pytest.skip("AST nodes not implemented yet - TDD phase")
 
-        # Base node should have these methods
-        node = ASTNode()
+        # Test with a concrete class since ASTNode is abstract
+        node = StringLiteral("test")
         assert hasattr(node, 'to_python')
         assert hasattr(node, 'accept')  # For visitor pattern if needed
         assert callable(node.to_python)
+
+        # Test that it's an instance of ASTNode
+        assert isinstance(node, ASTNode)
 
     def test_program_node(self):
         """Test Program node (root of AST)."""

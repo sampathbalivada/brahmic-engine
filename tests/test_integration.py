@@ -18,12 +18,13 @@ from lexer import TengLexer
 try:
     from transpiler import TengTranspiler
     from parser import TengParser
-    from code_generator import CodeGenerator
 except ImportError:
     # Expected during TDD phase - components don't exist yet
     TengTranspiler = None
     TengParser = None
-    CodeGenerator = None
+
+# We don't have a separate CodeGenerator - it's part of AST nodes
+CodeGenerator = None
 
 
 class TestCompleteTranslation:

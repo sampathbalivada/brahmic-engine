@@ -52,7 +52,7 @@ class TengLexer:
         'COMMA', 'DOT', 'COLON',
         
         # Special
-        'NEWLINE', 'INDENT', 'DEDENT',
+        'NEWLINE',
         'CHEPPU',  # Special token for print
     )
     
@@ -168,47 +168,11 @@ class TengLexer:
         r'\n+'
         t.lexer.lineno += len(t.value)
         self.at_line_start = True
-        
+
         # Only return newline tokens when not inside parentheses
         if self.paren_count == 0:
             return t
-    
-    def t_WHITESPACE(self, t):
-        r'[ \t]+'
-        """Handle indentation at the beginning of lines."""
-        if self.at_line_start:
-            # Calculate indentation level
-            indent_level = 0
-            for char in t.value:
-                if char == ' ':
-                    indent_level += 1
-                elif char == '\t':
-                    indent_level += 8  # Assume tab = 8 spaces
-            
-            # Generate INDENT/DEDENT tokens
-            current_indent = self.indent_stack[-1]
-            
-            if indent_level > current_indent:
-                self.indent_stack.append(indent_level)
-                t.type = 'INDENT'
-                t.value = indent_level
-                self.at_line_start = False
-                return t
-            elif indent_level < current_indent:
-                # May need multiple DEDENT tokens
-                dedent_count = 0
-                while self.indent_stack and self.indent_stack[-1] > indent_level:
-                    self.indent_stack.pop()
-                    dedent_count += 1
-                
-                if dedent_count > 0:
-                    t.type = 'DEDENT'
-                    t.value = dedent_count
-                    self.at_line_start = False
-                    return t
-        
-        # Not at line start or no indentation change
-        self.at_line_start = False
+
     
     def t_error(self, t):
         """Handle lexing errors."""
