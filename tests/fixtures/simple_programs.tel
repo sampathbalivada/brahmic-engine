@@ -1,0 +1,30 @@
+# Simple Telugu Programs for Testing
+# These files contain Telugu code samples for testing the parser
+
+# Program 1: Hello World
+("Hello World")cheppu
+
+# Program 2: Variables
+name = "Ravi"
+age = 25
+("Name:", name)cheppu
+("Age:", age)cheppu
+
+# Program 3: Simple Conditional
+x = 10
+okavela x > 5 aite:
+    ("x is greater")cheppu
+lekapothe:
+    ("x is not greater")cheppu
+
+# Program 4: Simple Loop
+range(3) lo i ki:
+    ("Number:", i)cheppu
+
+# Program 5: Simple Function
+vidhanam greet(name):
+    ("Hello", name)cheppu
+    "Welcome" ivvu
+
+result = greet("Telugu")
+(result)cheppu

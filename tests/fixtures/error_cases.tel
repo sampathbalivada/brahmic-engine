@@ -1,0 +1,45 @@
+# Error Cases for Testing Parser Error Handling
+
+# Syntax Errors (these should fail parsing)
+
+# Missing aite in conditional
+# okavela x > 5:
+
+# Missing ki in for loop
+# range(5) lo i:
+
+# Missing function name
+# vidhanam ():
+
+# Incomplete assignment
+# x =
+
+# Missing condition in okavela
+# okavela aite:
+
+# Missing variable in for loop
+# range(5) lo ki:
+
+# Valid edge cases that should parse correctly
+
+# Empty print
+("")cheppu
+
+# Empty list
+empty = []
+(empty)cheppu
+
+# Function with no parameters
+vidhanam test():
+    ("No parameters")cheppu
+
+test()
+
+# Single statement blocks
+okavela Nijam aite:
+    ("True")cheppu
+
+# Nested empty blocks (should handle gracefully)
+okavela Abaddam aite:
+    # This should be empty but valid
+    pass

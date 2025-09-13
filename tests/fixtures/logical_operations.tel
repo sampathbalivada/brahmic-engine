@@ -1,0 +1,39 @@
+# Telugu Logical Operations Test Programs
+
+# Boolean Literals
+is_valid = Nijam
+is_invalid = Abaddam
+("Valid:", is_valid)cheppu
+("Invalid:", is_invalid)cheppu
+
+# AND Operations
+age = 20
+has_license = Nijam
+okavela age >= 18 mariyu has_license aite:
+    ("Can drive")cheppu
+lekapothe:
+    ("Cannot drive")cheppu
+
+# OR Operations
+has_id = Abaddam
+has_passport = Nijam
+okavela has_id leda has_passport aite:
+    ("Has valid ID")cheppu
+lekapothe:
+    ("No valid ID")cheppu
+
+# NOT Operations
+is_weekend = Abaddam
+okavela is_weekend avvakapote aite:
+    ("It's a weekday")cheppu
+lekapothe:
+    ("It's weekend")cheppu
+
+# Complex Logical Expression
+x = 5
+y = 10
+z = 15
+okavela x < y mariyu y < z leda x == 0 aite:
+    ("Complex condition is true")cheppu
+lekapothe:
+    ("Complex condition is false")cheppu

@@ -1,0 +1,35 @@
+# Telugu Data Structures Test Programs
+
+# List Operations
+numbers = [1, 2, 3, 4, 5]
+("Original list:", numbers)cheppu
+
+# For loop with list
+numbers lo num ki:
+    ("Number:", num)cheppu
+
+# List methods
+numbers.append(6)
+("After append:", numbers)cheppu
+("Length:", len(numbers))cheppu
+
+# String operations
+message = "Hello Telugu"
+("Message:", message)cheppu
+("Length:", len(message))cheppu
+
+# Mixed data types
+mixed = ["text", 42, Nijam, [1, 2, 3]]
+mixed lo item ki:
+    ("Item:", item)cheppu
+
+# Function with list parameter
+vidhanam process_list(data):
+    total = 0
+    data lo value ki:
+        okavela value > 0 aite:
+            total = total + value
+    total ivvu
+
+result = process_list([1, -2, 3, -4, 5])
+("Sum of positive numbers:", result)cheppu

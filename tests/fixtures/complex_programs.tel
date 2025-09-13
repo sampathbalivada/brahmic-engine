@@ -1,0 +1,44 @@
+# Complex Telugu Programs for Testing
+
+# Factorial Function
+vidhanam factorial(n):
+    okavela n <= 1 aite:
+        1 ivvu
+    lekapothe:
+        n * factorial(n-1) ivvu
+
+result = factorial(5)
+("Factorial of 5:", result)cheppu
+
+# Nested Loops with Conditionals
+range(4) lo i ki:
+    okavela i > 0 aite:
+        range(i) lo j ki:
+            okavela j % 2 == 0 aite:
+                ("Even:", j)cheppu
+            lekapothe:
+                ("Odd:", j)cheppu
+
+# Complex Elif Chain
+score = 85
+okavela score >= 90 aite:
+    ("Grade: A")cheppu
+lekapothe okavela score >= 80 aite:
+    ("Grade: B")cheppu
+lekapothe okavela score >= 70 aite:
+    ("Grade: C")cheppu
+lekapothe:
+    ("Grade: F")cheppu
+
+# While Loop with Break/Continue
+count = 0
+count < 10 unnanta varaku:
+    okavela count == 5 aite:
+        count = count + 1
+        munduku vellu
+    okavela count == 8 aite:
+        aagipo
+    ("Count:", count)cheppu
+    count = count + 1
+
+("Done with while loop")cheppu
