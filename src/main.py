@@ -26,39 +26,27 @@ Examples:
   %(prog)s -c '("Hello World")cheppu'          # Run Tenglish code string
   %(prog)s hello.teng --args "arg1 arg2"       # Run with command line arguments
   %(prog)s hello.teng -o output.py             # Save Python code to file and run
-        """
+        """,
     )
 
     # Input options (mutually exclusive)
     input_group = parser.add_mutually_exclusive_group(required=True)
     input_group.add_argument(
-        'input_file',
-        nargs='?',
-        help='Tenglish source file to run (e.g., program.teng)'
+        "input_file", nargs="?", help="Tenglish source file to run (e.g., program.teng)"
     )
-    input_group.add_argument(
-        '-c', '--code',
-        help='Tenglish code string to run'
-    )
+    input_group.add_argument("-c", "--code", help="Tenglish code string to run")
 
     # Output options
+    parser.add_argument("-o", "--output", help="Output file for Python code")
     parser.add_argument(
-        '-o', '--output',
-        help='Output file for Python code'
+        "--show-python", action="store_true", help="Display the generated Python code"
     )
     parser.add_argument(
-        '--show-python',
-        action='store_true',
-        help='Display the generated Python code'
+        "--debug", action="store_true", help="Show debug information during execution"
     )
     parser.add_argument(
-        '--debug',
-        action='store_true',
-        help='Show debug information during execution'
-    )
-    parser.add_argument(
-        '--args',
-        help='Arguments to pass to the Tenglish program (e.g., --args "arg1 arg2")'
+        "--args",
+        help='Arguments to pass to the Tenglish program (e.g., --args "arg1 arg2")',
     )
 
     args = parser.parse_args()
@@ -104,9 +92,9 @@ Examples:
             if args.args:
                 # Parse arguments and set up sys.argv
                 program_args = args.args.split()
-                sys.argv = [args.input_file or '<string>'] + program_args
+                sys.argv = [args.input_file or "<string>"] + program_args
             else:
-                sys.argv = [args.input_file or '<string>']
+                sys.argv = [args.input_file or "<string>"]
 
             exec(python_code)
         finally:
@@ -124,17 +112,16 @@ Examples:
         sys.exit(1)
 
 
-
 def read_file(filename):
     """Read Telugu source file."""
     try:
-        with open(filename, 'r', encoding='utf-8') as f:
+        with open(filename, "r", encoding="utf-8") as f:
             return f.read()
     except UnicodeDecodeError:
         # Try different encodings
-        for encoding in ['utf-8', 'latin-1', 'cp1252']:
+        for encoding in ["utf-8", "latin-1", "cp1252"]:
             try:
-                with open(filename, 'r', encoding=encoding) as f:
+                with open(filename, "r", encoding=encoding) as f:
                     return f.read()
             except UnicodeDecodeError:
                 continue
@@ -143,9 +130,9 @@ def read_file(filename):
 
 def write_file(filename, content):
     """Write Python code to file."""
-    with open(filename, 'w', encoding='utf-8') as f:
+    with open(filename, "w", encoding="utf-8") as f:
         f.write(content)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

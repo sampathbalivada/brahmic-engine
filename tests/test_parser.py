@@ -10,14 +10,37 @@ import sys
 import os
 
 # Add src to Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from lexer import TengLexer
 
 # These imports will fail initially - that's expected in TDD
 try:
     from parser import TengParser
-    from ast_nodes import *
+    from ast_nodes import (
+        Program,
+        Statement,
+        Expression,
+        BinaryOperation,
+        UnaryOperation,
+        AssignmentStatement,
+        PrintStatement,
+        IfStatement,
+        ForStatement,
+        WhileStatement,
+        FunctionDefinition,
+        ReturnStatement,
+        BreakStatement,
+        ContinueStatement,
+        ExpressionStatement,
+        FunctionCall,
+        Identifier,
+        NumberLiteral,
+        StringLiteral,
+        BooleanLiteral,
+        ListLiteral,
+        ElifBlock,
+    )
 except ImportError:
     # Expected during TDD phase - parser doesn't exist yet
     TengParser = None
@@ -62,7 +85,7 @@ class TestTengParser:
 
     def test_number_assignment(self):
         """Test number assignment: age = 25"""
-        code = 'age = 25'
+        code = "age = 25"
         ast = self.parse_code(code)
 
         assert isinstance(ast, Program)
@@ -98,8 +121,8 @@ class TestTengParser:
 
     def test_simple_conditional(self):
         """Test simple if: okavela x > 5 aite:"""
-        code = '''okavela x > 5 aite:
-    ("x is greater")cheppu'''
+        code = """okavela x > 5 aite:
+    ("x is greater")cheppu"""
 
         ast = self.parse_code(code)
         stmt = ast.statements[0]
@@ -119,10 +142,10 @@ class TestTengParser:
 
     def test_if_else_statement(self):
         """Test if-else: okavela x > 5 aite: ... lekapothe:"""
-        code = '''okavela x > 5 aite:
+        code = """okavela x > 5 aite:
     ("greater")cheppu
 lekapothe:
-    ("not greater")cheppu'''
+    ("not greater")cheppu"""
 
         ast = self.parse_code(code)
         stmt = ast.statements[0]
@@ -133,12 +156,12 @@ lekapothe:
 
     def test_elif_chain(self):
         """Test elif: okavela ... aite: ... lekapothe okavela ... aite:"""
-        code = '''okavela score >= 90 aite:
+        code = """okavela score >= 90 aite:
     ("Grade A")cheppu
 lekapothe okavela score >= 80 aite:
     ("Grade B")cheppu
 lekapothe:
-    ("Grade F")cheppu'''
+    ("Grade F")cheppu"""
 
         ast = self.parse_code(code)
         stmt = ast.statements[0]
@@ -151,8 +174,8 @@ lekapothe:
 
     def test_for_loop(self):
         """Test for loop: range(5) lo i ki:"""
-        code = '''range(5) lo i ki:
-    (i)cheppu'''
+        code = """range(5) lo i ki:
+    (i)cheppu"""
 
         ast = self.parse_code(code)
         stmt = ast.statements[0]
@@ -164,8 +187,8 @@ lekapothe:
 
     def test_for_loop_with_list(self):
         """Test for loop with list: numbers lo num ki:"""
-        code = '''numbers lo num ki:
-    (num)cheppu'''
+        code = """numbers lo num ki:
+    (num)cheppu"""
 
         ast = self.parse_code(code)
         stmt = ast.statements[0]
@@ -176,9 +199,9 @@ lekapothe:
 
     def test_while_loop(self):
         """Test while loop: count < 3 unnanta varaku:"""
-        code = '''count < 3 unnanta varaku:
+        code = """count < 3 unnanta varaku:
     (count)cheppu
-    count = count + 1'''
+    count = count + 1"""
 
         ast = self.parse_code(code)
         stmt = ast.statements[0]
@@ -189,9 +212,9 @@ lekapothe:
 
     def test_function_definition(self):
         """Test function: vidhanam greet(name):"""
-        code = '''vidhanam greet(name):
+        code = """vidhanam greet(name):
     ("Hello", name)cheppu
-    "Welcome" ivvu'''
+    "Welcome" ivvu"""
 
         ast = self.parse_code(code)
         stmt = ast.statements[0]
@@ -208,8 +231,8 @@ lekapothe:
 
     def test_return_statement(self):
         """Test return: value ivvu"""
-        code = '''vidhanam test():
-    result ivvu'''
+        code = """vidhanam test():
+    result ivvu"""
 
         ast = self.parse_code(code)
         func = ast.statements[0]
@@ -220,9 +243,9 @@ lekapothe:
 
     def test_break_statement(self):
         """Test break: aagipo"""
-        code = '''range(10) lo i ki:
+        code = """range(10) lo i ki:
     okavela i == 5 aite:
-        aagipo'''
+        aagipo"""
 
         ast = self.parse_code(code)
         for_stmt = ast.statements[0]
@@ -232,9 +255,9 @@ lekapothe:
 
     def test_continue_statement(self):
         """Test continue: munduku vellu"""
-        code = '''range(10) lo i ki:
+        code = """range(10) lo i ki:
     okavela i == 2 aite:
-        munduku vellu'''
+        munduku vellu"""
 
         ast = self.parse_code(code)
         for_stmt = ast.statements[0]
@@ -246,20 +269,20 @@ lekapothe:
         """Test logical operators: mariyu, leda, avvakapote"""
 
         # Test AND
-        code = 'okavela age >= 18 mariyu has_license aite:\n    x = 1'
+        code = "okavela age >= 18 mariyu has_license aite:\n    x = 1"
         ast = self.parse_code(code)
         condition = ast.statements[0].condition
         assert isinstance(condition, BinaryOperation)
         assert condition.operator == "and"
 
         # Test OR
-        code = 'okavela age < 18 leda has_permission aite:\n    x = 1'
+        code = "okavela age < 18 leda has_permission aite:\n    x = 1"
         ast = self.parse_code(code)
         condition = ast.statements[0].condition
         assert condition.operator == "or"
 
         # Test NOT
-        code = 'okavela is_weekend avvakapote:\n    x = 1'
+        code = "okavela is_weekend avvakapote:\n    x = 1"
         ast = self.parse_code(code)
         condition = ast.statements[0].condition
         assert isinstance(condition, UnaryOperation)
@@ -267,13 +290,13 @@ lekapothe:
 
     def test_boolean_literals(self):
         """Test Telugu boolean literals: Nijam, Abaddam"""
-        code = 'is_valid = Nijam'
+        code = "is_valid = Nijam"
         ast = self.parse_code(code)
         stmt = ast.statements[0]
         assert isinstance(stmt.value, BooleanLiteral)
         assert stmt.value.value is True
 
-        code = 'is_invalid = Abaddam'
+        code = "is_invalid = Abaddam"
         ast = self.parse_code(code)
         stmt = ast.statements[0]
         assert isinstance(stmt.value, BooleanLiteral)
@@ -281,10 +304,10 @@ lekapothe:
 
     def test_nested_structures(self):
         """Test nested loops and conditionals"""
-        code = '''range(3) lo i ki:
+        code = """range(3) lo i ki:
     range(2) lo j ki:
         okavela i > j aite:
-            ("i is greater")cheppu'''
+            ("i is greater")cheppu"""
 
         ast = self.parse_code(code)
         outer_loop = ast.statements[0]
@@ -308,7 +331,7 @@ lekapothe:
 
     def test_list_literal(self):
         """Test list literal: [1, 2, 3]"""
-        code = 'numbers = [1, 2, 3]'
+        code = "numbers = [1, 2, 3]"
         ast = self.parse_code(code)
 
         stmt = ast.statements[0]
@@ -320,7 +343,7 @@ lekapothe:
 
     def test_arithmetic_expressions(self):
         """Test arithmetic operations"""
-        code = 'result = x + y * 2'
+        code = "result = x + y * 2"
         ast = self.parse_code(code)
 
         stmt = ast.statements[0]
@@ -337,7 +360,7 @@ lekapothe:
         operators = ["<", "<=", ">", ">=", "==", "!="]
 
         for op in operators:
-            code = f'okavela x {op} 5 aite:\n    x = 1'
+            code = f"okavela x {op} 5 aite:\n    x = 1"
             ast = self.parse_code(code)
             condition = ast.statements[0].condition
             assert condition.operator == op
@@ -345,10 +368,10 @@ lekapothe:
     def test_error_handling(self):
         """Test parser error handling for malformed code"""
         malformed_codes = [
-            'okavela x aite',  # Missing condition
-            'range(5) lo ki:',  # Missing variable
-            'vidhanam ():',     # Missing function name
-            'x = ',             # Incomplete assignment
+            "okavela x aite",  # Missing condition
+            "range(5) lo ki:",  # Missing variable
+            "vidhanam ():",  # Missing function name
+            "x = ",  # Incomplete assignment
         ]
 
         for code in malformed_codes:
@@ -357,7 +380,7 @@ lekapothe:
 
         # Test that valid empty print doesn't raise exception
         try:
-            result = self.parse_code('() cheppu')
+            result = self.parse_code("() cheppu")
             assert result is not None  # Should parse successfully
         except Exception:
             pytest.fail("Empty print should be valid syntax")
@@ -367,30 +390,30 @@ lekapothe:
 
         # Test empty if statement
         with pytest.raises(SyntaxError, match="If statement cannot have empty body"):
-            self.parse_code('okavela x > 5 aite:')
+            self.parse_code("okavela x > 5 aite:")
 
         # Test empty if-else statement (empty then block)
         with pytest.raises(SyntaxError, match="If statement cannot have empty body"):
-            self.parse_code('okavela x > 5 aite:\nlekapothe:\n    y = 10')
+            self.parse_code("okavela x > 5 aite:\nlekapothe:\n    y = 10")
 
         # Test empty for loop
         with pytest.raises(SyntaxError, match="For loop cannot have empty body"):
-            self.parse_code('range(5) lo i ki:')
+            self.parse_code("range(5) lo i ki:")
 
         # Test empty while loop
         with pytest.raises(SyntaxError, match="While loop cannot have empty body"):
-            self.parse_code('x < 10 unnanta varaku:')
+            self.parse_code("x < 10 unnanta varaku:")
 
         # Test empty function
         with pytest.raises(SyntaxError, match="Function cannot have empty body"):
-            self.parse_code('vidhanam test():')
+            self.parse_code("vidhanam test():")
 
         # Test that control structures with bodies work correctly
         valid_codes = [
-            'okavela x > 5 aite:\n    y = 10',
+            "okavela x > 5 aite:\n    y = 10",
             'range(5) lo i ki:\n    ("hello")cheppu',
-            'x < 10 unnanta varaku:\n    x = x + 1',
-            'vidhanam test():\n    x = 5'
+            "x < 10 unnanta varaku:\n    x = x + 1",
+            "vidhanam test():\n    x = 5",
         ]
 
         for code in valid_codes:
@@ -398,7 +421,9 @@ lekapothe:
                 result = self.parse_code(code)
                 assert result is not None  # Should parse successfully
             except Exception as e:
-                pytest.fail(f"Valid control structure should parse successfully: {code}. Error: {e}")
+                pytest.fail(
+                    f"Valid control structure should parse successfully: {code}. Error: {e}"
+                )
 
     def test_in_operator_parsing(self):
         """Test parsing of 'in' operator in expressions."""
@@ -410,9 +435,9 @@ lekapothe:
         # Should be assignment with binary operation
         assert len(ast.statements) == 1
         assignment = ast.statements[0]
-        assert hasattr(assignment, 'value')
-        assert hasattr(assignment.value, 'operator')
-        assert assignment.value.operator == 'in'
+        assert hasattr(assignment, "value")
+        assert hasattr(assignment.value, "operator")
+        assert assignment.value.operator == "in"
 
         # Test in conditional
         code = 'okavela "telugu" in ["telugu", "programming"] aite:\n    x = 1'
@@ -420,20 +445,22 @@ lekapothe:
 
         assert len(ast.statements) == 1
         if_stmt = ast.statements[0]
-        assert hasattr(if_stmt, 'condition')
-        assert if_stmt.condition.operator == 'in'
-        assert hasattr(if_stmt.condition, 'left')
-        assert hasattr(if_stmt.condition, 'right')
+        assert hasattr(if_stmt, "condition")
+        assert if_stmt.condition.operator == "in"
+        assert hasattr(if_stmt.condition, "left")
+        assert hasattr(if_stmt.condition, "right")
 
         # Test complex expression with in
-        code = 'okavela user_type in ["admin", "moderator"] mariyu active aite:\n    y = 2'
+        code = (
+            'okavela user_type in ["admin", "moderator"] mariyu active aite:\n    y = 2'
+        )
         ast = self.parse_code(code)
 
         if_stmt = ast.statements[0]
         # Should be a binary operation with 'and' at the top level
-        assert if_stmt.condition.operator == 'and'
+        assert if_stmt.condition.operator == "and"
         # Left side should be the 'in' operation
-        assert if_stmt.condition.left.operator == 'in'
+        assert if_stmt.condition.left.operator == "in"
 
 
 class TestParserCodeGeneration:
@@ -473,29 +500,29 @@ class TestParserCodeGeneration:
 
     def test_conditional_generation(self):
         """Test Python code generation for conditionals"""
-        telugu = '''okavela x > 5 aite:
-    ("greater")cheppu'''
+        telugu = """okavela x > 5 aite:
+    ("greater")cheppu"""
 
         python = self.parse_and_generate(telugu)
-        expected = '''if x > 5:
-    print("greater")'''
+        expected = """if x > 5:
+    print("greater")"""
         assert python.strip() == expected.strip()
 
     def test_for_loop_generation(self):
         """Test Python code generation for for loops"""
-        telugu = '''range(5) lo i ki:
-    (i)cheppu'''
+        telugu = """range(5) lo i ki:
+    (i)cheppu"""
 
         python = self.parse_and_generate(telugu)
-        expected = '''for i in range(5):
-    print(i)'''
+        expected = """for i in range(5):
+    print(i)"""
         assert python.strip() == expected.strip()
 
     def test_function_generation(self):
         """Test Python code generation for functions"""
-        telugu = '''vidhanam greet(name):
+        telugu = """vidhanam greet(name):
     ("Hello", name)cheppu
-    "Welcome" ivvu'''
+    "Welcome" ivvu"""
 
         python = self.parse_and_generate(telugu)
         expected = '''def greet(name):

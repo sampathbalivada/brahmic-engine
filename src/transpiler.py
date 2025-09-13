@@ -5,6 +5,8 @@ This module orchestrates the complete transpilation pipeline:
 Telugu/Tenglish code → Lexer → Parser → AST → Python code
 """
 
+from typing import Optional
+
 try:
     from .lexer import TengLexer
     from .parser import TengParser
@@ -59,7 +61,7 @@ class TengTranspiler:
             # Re-raise with more context
             raise SyntaxError(f"Transpilation failed: {str(e)}") from e
 
-    def transpile_file(self, input_file: str, output_file: str = None) -> str:
+    def transpile_file(self, input_file: str, output_file: Optional[str] = None) -> str:
         """
         Transpile a Telugu file to Python.
 
@@ -71,7 +73,7 @@ class TengTranspiler:
             Generated Python code
         """
         # Read Telugu source
-        with open(input_file, 'r', encoding='utf-8') as f:
+        with open(input_file, "r", encoding="utf-8") as f:
             telugu_code = f.read()
 
         # Transpile
@@ -79,7 +81,7 @@ class TengTranspiler:
 
         # Write output if specified
         if output_file:
-            with open(output_file, 'w', encoding='utf-8') as f:
+            with open(output_file, "w", encoding="utf-8") as f:
                 f.write(python_code)
 
         return python_code
@@ -118,7 +120,7 @@ class TengTranspiler:
             print("AST:")
             print(f"  Type: {type(ast)}")
             print(f"  Repr: {repr(ast)}")
-            if hasattr(ast, 'statements'):
+            if hasattr(ast, "statements"):
                 print(f"  Statements: {len(ast.statements)}")
                 for i, stmt in enumerate(ast.statements):
                     print(f"    {i}: {type(stmt).__name__} = {repr(stmt)}")
@@ -205,9 +207,9 @@ if __name__ == "__main__":
             try:
                 line = input(">>> " if not debug_mode else "debug>>> ")
 
-                if line.strip().lower() == 'quit':
+                if line.strip().lower() == "quit":
                     break
-                elif line.strip().lower() == 'debug':
+                elif line.strip().lower() == "debug":
                     debug_mode = not debug_mode
                     print(f"Debug mode: {'ON' if debug_mode else 'OFF'}")
                     continue
