@@ -31,6 +31,9 @@ try:
         StringLiteral,
         BooleanLiteral,
         ListLiteral,
+        ElifBlock,
+        MethodCall,
+        AttributeAccess,
     )
 except ImportError:
     # Fallback for direct execution
@@ -57,6 +60,9 @@ except ImportError:
         StringLiteral,
         BooleanLiteral,
         ListLiteral,
+        ElifBlock,
+        MethodCall,
+        AttributeAccess,
     )
 
 
