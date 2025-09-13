@@ -1,0 +1,10 @@
+vidhanam namaste(peru):
+    ("Namaste ", peru, " garu.")cheppu
+
+("Brahmic Engine ki Swagatam")cheppu
+namaste("Sampath")
+
+okavela "telugu" in ["telugu", "programming"] aite:
+    ("Telugu lo programming bagundi!")cheppu
+lekapothe:
+    ("Telugu lo programming nerchukundam!")cheppu
