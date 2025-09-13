@@ -189,3 +189,4 @@ src/parsetab.py
 src/parser.out
 tests/output/
 generated_python/
+CLAUDE.md
