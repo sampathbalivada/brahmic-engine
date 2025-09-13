@@ -278,8 +278,7 @@ brahmic-engine/
 │   ├── parser.py             # Parser to build AST
 │   ├── ast_nodes.py          # AST node definitions with code generation
 │   ├── transpiler.py         # Main transpiler orchestrator
-│   ├── keywords.py           # Telugu-Python keyword mappings
-│   └── parser_yacc.py        # PLY-generated parser tables
+│   └── keywords.py           # Telugu-Python keyword mappings
 ├── tests/
 │   ├── test_lexer.py         # Lexer tests (15 tests)
 │   ├── test_parser.py        # Parser tests (26 tests)
