@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ page.title }} | {{ site.title }}</title>
+  <link rel="stylesheet" href="{{ "/assets/main.css" | relative_url }}">
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1><a href="{{ "/" | relative_url }}">{{ site.title }}</a></h1>
+      <nav>
+        <a href="{{ "/" | relative_url }}">Home</a>
+        <a href="{{ "/getting-started.html" | relative_url }}">Getting Started</a>
+        <a href="{{ "/language-guide.html" | relative_url }}">Language Guide</a>
+        <a href="{{ "/examples.html" | relative_url }}">Examples</a>
+      </nav>
+    </div>
+  </header>
+  <main>
+    <div class="container">
+      {{ content }}
+    </div>
+  </main>
+</body>
+</html>
