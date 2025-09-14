@@ -1,6 +1,6 @@
 title: Brahmic Engine
 description: Documentation for the Brahmic Engine, a Telugu to Python transpiler.
-theme: minima
+theme: jekyll-theme-architect
 plugins:
   - jekyll-feed
   - jekyll-seo-tag
