@@ -189,3 +189,4 @@ tests/output/
 generated_python/
 CLAUDE.md
 docs/vendor/
+docs/bin
